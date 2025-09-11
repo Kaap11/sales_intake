@@ -594,27 +594,37 @@ Analyseer dit klantgesprek en maak een samenvatting met sprekers herkenning.
                     }
                 };
                 
-                mediaRecorder.onstop = function() {
-                    // Create audio blob
-                    const audioBlob = new Blob(recordingChunks, { type: 'audio/webm' });
-                    
-                    // Create file from blob
-                    const timestamp = new Date().toISOString().slice(0, 19).replace(/[-:]/g, '');
-                    audioData = new File([audioBlob], `klantgesprek_${timestamp}.webm`, { type: 'audio/webm' });
-                    
-                    // Show audio player
-                    const audioPlayer = document.getElementById('audioPlayer');
-                    audioPlayer.src = URL.createObjectURL(audioBlob);
-                    audioPlayer.style.display = 'block';
-                    
-                    const sizeInMB = (audioData.size / 1024 / 1024).toFixed(1);
-                    showStatus(`Opname voltooid! (${sizeInMB}MB)`, 'success', 1);
-                    
-                    // Stop all tracks
-                    stream.getTracks().forEach(track => track.stop());
-                    
-                    validateInputs();
-                };
+mediaRecorder.onstop = function() {
+    // Create audio blob
+    const audioBlob = new Blob(recordingChunks, { type: 'audio/webm' });
+    
+    // Create file from blob
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/[-:]/g, '');
+    audioData = new File([audioBlob], `klantgesprek_${timestamp}.webm`, { type: 'audio/webm' });
+    
+    // Automatisch downloaden
+    const downloadUrl = URL.createObjectURL(audioBlob);
+    const downloadLink = document.createElement('a');
+    downloadLink.href = downloadUrl;
+    downloadLink.download = `klantgesprek_${timestamp}.webm`;
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+    URL.revokeObjectURL(downloadUrl);
+    
+    // Show audio player
+    const audioPlayer = document.getElementById('audioPlayer');
+    audioPlayer.src = URL.createObjectURL(audioBlob);
+    audioPlayer.style.display = 'block';
+    
+    const sizeInMB = (audioData.size / 1024 / 1024).toFixed(1);
+    showStatus(`Opname voltooid en gedownload! (${sizeInMB}MB)`, 'success', 1);
+    
+    // Stop all tracks
+    stream.getTracks().forEach(track => track.stop());
+    
+    validateInputs();
+};
                 
                 // Start recording
                 mediaRecorder.start();
